@@ -602,6 +602,9 @@ export function createScene(canvas) {
     if (aspect < 1) { // portrait: pull back so the house fits
       const k = lerp(1.45, 1.0, near3);
       pos.sub(tgt).multiplyScalar(k).add(tgt);
+      // final card on mobile only shows the top half of the screen: lift the house into it
+      const fin = easeIO(smooth(s, 4.3, 4.95));
+      tgt.y -= 5.5 * fin; pos.y -= 2 * fin;
     }
     const par = 1 - near3 * 0.8;
     pos.x += px * 0.9 * par; pos.y -= py * 0.45 * par;
