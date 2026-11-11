@@ -213,6 +213,7 @@ setTimeout(hideLoader, 6000); // never block the page
    3. the procedural 3D scene (scene.js), used when no media is present.
    See PROMPTS.md for how to generate the photos / video. */
 const MEDIA = {
+  flight: 'assets/flight/manifest.json',
   frames: 'assets/frames/manifest.json',
   video: 'assets/build.mp4',
   images: ['1-ground', '2-structure', '3-finish', '4-inside', '5-living', '6-home'].map((n) => `assets/stages/${n}.jpg`),
@@ -237,6 +238,19 @@ function stageToTime(s, duration) {
 // Frame-sequence player (the technique Apple uses on its product pages): the drone video is
 // cut into stills packed in WebP atlases; the canvas draws the exact frame for the scroll
 // position, blending the two nearest frames, so there is no video seeking and no stutter.
+// Desktop: decode the 24 fps flight with WebCodecs (flight.js). Phones use the lighter atlases.
+async function useFlight() {
+  if (innerWidth < 900 || matchMedia('(pointer: coarse)').matches) return null;
+  const cv = document.createElement('canvas');
+  cv.className = 'media';
+  frame.prepend(cv);
+  const player = await import('./flight.js')
+    .then((mod) => mod.createFlight({ manifestUrl: MEDIA.flight, canvas: cv, timeAt: stageToTime }))
+    .catch((e) => { console.warn('flight unavailable', e); return null; });
+  if (!player) { cv.remove(); return null; }
+  $('scene').hidden = true;
+  return player;
+}
 async function useFrames() {
   const r = await fetch(MEDIA.frames).catch(() => null);
   if (!r || !okMedia(r)) return null;
@@ -426,7 +440,8 @@ function use3D() {
 }
 (async () => {
   try {
-    media = await useFrames();
+    media = await useFlight();
+    if (!media) media = await useFrames();
     if (!media && (await exists(MEDIA.video))) media = await useVideo();
     if (!media && (await Promise.all(MEDIA.images.map(exists))).every(Boolean)) media = await useImages();
     if (!media) await use3D();
