@@ -228,7 +228,7 @@ let last = performance.now();
 function loop(now) {
   const dt = Math.min(0.1, (now - last) / 1000);
   last = now;
-  s += (target - s) * (1 - Math.exp(-dt * 6));
+  s = STILL ? target : s + (target - s) * (1 - Math.exp(-dt * 6));
   if (Math.abs(target - s) < 1e-4) s = target;
   pointer.x += (pointer.tx - pointer.x) * (1 - Math.exp(-dt * 3));
   pointer.y += (pointer.ty - pointer.y) * (1 - Math.exp(-dt * 3));
