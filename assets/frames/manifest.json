@@ -1,9 +1,23 @@
 {
-  "fps": 8,
-  "count": 466,
+  "fps": 12,
+  "count": 699,
   "duration": 58.25,
   "sets": {
-    "hd": { "w": 1280, "h": 720, "cols": 2, "rows": 2, "files": 117, "pattern": "assets/frames/hd/{n}.webp" },
-    "sd": { "w": 640, "h": 360, "cols": 4, "rows": 4, "files": 30, "pattern": "assets/frames/sd/{n}.webp" }
+    "hd": {
+      "w": 1280,
+      "h": 720,
+      "cols": 2,
+      "rows": 2,
+      "files": 175,
+      "pattern": "assets/frames/hd/{n}.webp"
+    },
+    "sd": {
+      "w": 640,
+      "h": 360,
+      "cols": 4,
+      "rows": 4,
+      "files": 44,
+      "pattern": "assets/frames/sd/{n}.webp"
+    }
   }
 }
