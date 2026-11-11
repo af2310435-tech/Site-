@@ -250,17 +250,66 @@ function useImages() {
   });
   $('scene').hidden = true;
   return Promise.all(imgs.map((im) => im.decode().catch(() => {}))).then(() => ({
-    update(s) {
-      imgs.forEach((im, i) => {
-        // each photo fades in over the previous one, with a slow push-in like a drone shot
-        const o = i === 0 ? 1 : smooth(s, i - 0.55, i - 0.05);
-        const local = clamp((s - (i - 0.55)) / 1.55);
-        im.style.opacity = o.toFixed(3);
-        im.style.transform = `scale(${(1.08 - 0.08 * local).toFixed(4)})`;
-        im.style.visibility = o < 0.002 ? 'hidden' : 'visible';
+    update(s, px = 0, py = 0) {
+      cameraMove(s, px, py).forEach((L, i) => {
+        const im = imgs[i];
+        im.style.visibility = L.o < 0.002 ? 'hidden' : 'visible';
+        if (L.o < 0.002) return;
+        im.style.opacity = L.o.toFixed(3);
+        im.style.transform = `translate(${L.t.x.toFixed(3)}%, ${L.t.y.toFixed(3)}%) scale(${L.t.k.toFixed(4)})`;
+        const blur = L.blur || 0, light = L.light || 0;
+        im.style.filter = blur > 0.15 || light > 0.01 ? `blur(${blur.toFixed(1)}px) brightness(${(1 + light).toFixed(3)})` : '';
+        const m = L.mask === undefined ? '' : `linear-gradient(to top, #000 ${L.mask.toFixed(1)}%, transparent ${(L.mask + 18).toFixed(1)}%)`;
+        im.style.webkitMaskImage = m; im.style.maskImage = m;
       });
     },
   }));
+}
+
+/* Camera choreography for the six photos.
+   A transform is { k, x, y }: a point p (in % of the frame) is drawn at k·p + (x, y).
+   Instead of cross-fades, the "camera" flies: the drone pushes in while the building
+   rises out of the ground, then dives through the glass into the living room, walks out
+   through the window to the terrace and finally pulls back up above the pool. */
+const easeIn = (t) => t * t * t, easeOut = (t) => 1 - Math.pow(1 - t, 3);
+const T0 = { k: 1, x: 0, y: 0 };
+const about = (t, k, ox, oy) => ({ k: t.k * k, x: k * t.x + ox * (1 - k), y: k * t.y + oy * (1 - k) }); // then zoom k around (ox, oy)
+const shift = (t, dx, dy) => ({ k: t.k, x: t.x + dx, y: t.y + dy });
+const then = (a, b) => ({ k: a.k * b.k, x: b.k * a.x + b.x, y: b.k * a.y + b.y }); // a, then b
+const at = (t, px, py) => [t.k * px + t.x, t.k * py + t.y];
+const rise = (s, a, b) => (s >= b ? undefined : lerp(-18, 100, easeIO(clamp((s - a) / (b - a)))));
+// lines the "finish" photo up with the two construction photos (it was framed a little wider)
+const CAL_FINISH = about(T0, 1.3, 35, 22);
+
+function cameraMove(s, px, py) {
+  const L = [];
+  const look = (t, k = 1) => shift(t, -px * 0.8 * k, -py * 0.6 * k); // tiny pointer parallax
+  // 1-3: same drone position; slow push-in and pan, the house rises from the ground
+  const d = Math.min(s, 2.1);
+  const drone = shift(about(T0, 1.04 + 0.06 * d, 52, 58), -0.8 * d, 0);
+  L[0] = { o: s < 0.97 ? 1 : 0, t: look(drone) };
+  L[1] = { o: s >= 0.4 && s < 1.97 ? 1 : 0, t: look(drone), mask: rise(s, 0.4, 0.97) };
+  // 3 → 4: dive into the ground-floor glazing
+  let t2 = then(CAL_FINISH, drone);
+  const z2 = easeIn(clamp((s - 2.05) / 0.72));
+  const [dx, dy] = at(t2, 49, 66);
+  t2 = about(t2, 1 + 3.2 * z2, dx, dy);
+  L[2] = { o: s >= 1.4 ? 1 - smooth(s, 2.6, 2.78) : 0, t: look(t2), mask: rise(s, 1.4, 1.97), blur: 9 * z2 * z2, light: 0.3 * z2 };
+  // 4: land in the living room, drift, then fly toward the window
+  const a3 = easeOut(clamp((s - 2.55) / 0.55)), z3 = easeIn(clamp((s - 3.08) / 0.68));
+  let t3 = about(T0, 1.74 - 0.7 * a3, 50, 58);
+  t3 = shift(t3, -1.6 * clamp(s - 2.9, 0, 0.6), 0);
+  t3 = about(t3, 1 + 2.2 * z3, ...at(t3, 42, 44));
+  L[3] = { o: smooth(s, 2.55, 2.74) * (1 - smooth(s, 3.58, 3.76)), t: look(t3, 0.6), blur: 9 * (1 - a3) * (1 - a3) + 9 * z3 * z3, light: 0.25 * (1 - a3) + 0.35 * z3 };
+  // 5: step out onto the terrace (arrive from the right), then glide toward the pool
+  const a4 = easeOut(clamp((s - 3.58) / 0.55)), z4 = easeIn(clamp((s - 4.08) / 0.6));
+  let t4 = shift(about(T0, 1.59 - 0.55 * a4, 62, 50), 7 * (1 - a4), 0);
+  t4 = about(t4, 1 + 1.4 * z4, ...at(t4, 32, 70));
+  L[4] = { o: smooth(s, 3.58, 3.76) * (1 - smooth(s, 4.5, 4.66)), t: look(t4, 0.6), blur: 8 * (1 - a4) * (1 - a4) + 7 * z4 * z4, light: 0.2 * (1 - a4) + 0.2 * z4 };
+  // 6: drone rises and pulls back from the pool to reveal the villa
+  const a5 = easeOut(clamp((s - 4.5) / 0.5));
+  L[5] = { o: smooth(s, 4.5, 4.66), t: look(about(T0, 2.64 - 1.6 * a5, 52, 70), 0.4 * (1 - a5)), blur: 8 * (1 - a5) * (1 - a5), light: 0.2 * (1 - a5) };
+  return L;
 }
 function use3D() {
   return import('./scene.js').then(async (m) => {
@@ -298,7 +347,7 @@ function loop(now) {
   pointer.y += (pointer.ty - pointer.y) * (1 - Math.exp(-dt * 3));
   ui(s);
   const r = build.getBoundingClientRect();
-  if (media) media.update(s);
+  if (media) media.update(s, pointer.x, pointer.y);
   const moving = Math.abs(target - s) > 1e-4 || stillFrames > 0;
   if (world && r.bottom > 0 && r.top < innerHeight && (!STILL || moving)) {
     world.render(s, now / 1000, pointer.x, pointer.y);
