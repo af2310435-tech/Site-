@@ -220,6 +220,10 @@ import('./scene.js')
   });
 
 /* ------------------------------------------------------------------ loop */
+// ?still renders only when the scroll moves (used for automated screenshots)
+const STILL = new URLSearchParams(location.search).has('still');
+let stillFrames = 3;
+addEventListener('scroll', () => { stillFrames = 3; }, { passive: true });
 let last = performance.now();
 function loop(now) {
   const dt = Math.min(0.1, (now - last) / 1000);
@@ -230,7 +234,11 @@ function loop(now) {
   pointer.y += (pointer.ty - pointer.y) * (1 - Math.exp(-dt * 3));
   ui(s);
   const r = build.getBoundingClientRect();
-  if (world && r.bottom > 0 && r.top < innerHeight) world.render(s, now / 1000, pointer.x, pointer.y);
+  const moving = Math.abs(target - s) > 1e-4 || stillFrames > 0;
+  if (world && r.bottom > 0 && r.top < innerHeight && (!STILL || moving)) {
+    world.render(s, now / 1000, pointer.x, pointer.y);
+    if (STILL && stillFrames > 0) stillFrames--;
+  }
   requestAnimationFrame(loop);
 }
 applyLang(lang);
