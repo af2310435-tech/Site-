@@ -205,8 +205,8 @@ const hideLoader = () => loader.classList.add('done');
 setTimeout(hideLoader, 6000); // never block the page
 
 import('./scene.js')
-  .then((m) => {
-    world = m.createScene($('scene'));
+  .then(async (m) => {
+    world = await m.createScene($('scene'));
     const resize = () => world.resize(frame.clientWidth, frame.clientHeight);
     addEventListener('resize', resize);
     resize();
