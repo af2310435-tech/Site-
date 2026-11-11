@@ -222,22 +222,42 @@ const exists = (url) => fetch(url, { method: 'HEAD' })
   .catch(() => false);
 
 let media = null; // { update(s) }
+// Scroll position (stage) → time in assets/build.mp4. The montage is six 10 s clips joined by
+// 0.4 s fades; each stage lands on the join where that stage's photo is, and the last stretch
+// (4.55 → 5) plays the orbit around the finished villa inside the final card.
+const VIDEO_KNOTS = [[0, 0], [1, 9.84], [2, 19.48], [3, 29.13], [4, 38.77], [4.55, 48.41], [5, 58.2]];
+function stageToTime(s, duration) {
+  const k = VIDEO_KNOTS;
+  for (let i = 1; i < k.length; i++) {
+    if (s <= k[i][0]) return Math.min(duration - 0.05, lerp(k[i - 1][1], k[i][1], (s - k[i - 1][0]) / (k[i][0] - k[i - 1][0])));
+  }
+  return duration - 0.05;
+}
 function useVideo() {
   const v = document.createElement('video');
-  Object.assign(v, { src: MEDIA.video, muted: true, playsInline: true, preload: 'auto' });
+  v.muted = true; v.playsInline = true; v.preload = 'auto';
+  v.setAttribute('muted', ''); v.setAttribute('playsinline', '');
+  v.poster = MEDIA.images[0];
+  v.src = MEDIA.video;
   v.className = 'media';
   frame.prepend(v);
   $('scene').hidden = true;
-  let want = 0, seeking = false;
-  v.addEventListener('seeked', () => { seeking = false; });
+  let seeking = false, pending = null;
+  const seek = (t) => { seeking = true; v.currentTime = t; };
+  v.addEventListener('seeked', () => { seeking = false; if (pending !== null) { const t = pending; pending = null; if (Math.abs(v.currentTime - t) > 0.02) seek(t); } });
+  // iOS only paints seeks after the video has been "played" once
+  const unlock = () => { v.play().then(() => v.pause()).catch(() => {}); };
+  addEventListener('touchstart', unlock, { once: true, passive: true });
   return new Promise((ok) => {
-    v.addEventListener('loadeddata', () => ok({
+    v.addEventListener('loadeddata', () => { unlock(); ok({
       update(s) {
-        want = (s / STAGES) * Math.max(0, v.duration - 0.05);
-        if (!seeking && Math.abs(v.currentTime - want) > 1 / 60) { seeking = true; v.currentTime = want; }
+        const t = stageToTime(s, v.duration || 58.25);
+        if (Math.abs(v.currentTime - t) < 1 / 48 && pending === null) return;
+        if (seeking) pending = t; else seek(t);
       },
-    }), { once: true });
+    }); }, { once: true });
     v.addEventListener('error', () => ok(null), { once: true });
+    v.load();
   });
 }
 function useImages() {

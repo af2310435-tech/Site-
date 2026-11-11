@@ -1,5 +1,7 @@
 # Visuels photoréalistes : comment les produire
 
+> Actuellement en ligne : `assets/build.mp4` = 6 clips Grok Imagine de 10 s (terrain→structure, structure→finitions, finitions→salon, salon→terrasse, terrasse→villa, tour de la villa) assemblés avec des fondus de 0,4 s. Si tu remplaces la vidéo par un montage d'une autre durée, ajuste `VIDEO_KNOTS` dans `main.js`.
+
 Le site affiche automatiquement, par ordre de priorité :
 
 1. **`assets/build.mp4`** : une vidéo de toute la construction. Le scroll avance et recule dans la vidéo (c'est la technique du site de la vidéo d'exemple).
