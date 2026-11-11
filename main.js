@@ -213,6 +213,7 @@ setTimeout(hideLoader, 6000); // never block the page
    3. the procedural 3D scene (scene.js), used when no media is present.
    See PROMPTS.md for how to generate the photos / video. */
 const MEDIA = {
+  frames: 'assets/frames/manifest.json',
   video: 'assets/build.mp4',
   images: ['1-ground', '2-structure', '3-finish', '4-inside', '5-living', '6-home'].map((n) => `assets/stages/${n}.jpg`),
 };
@@ -232,6 +233,89 @@ function stageToTime(s, duration) {
     if (s <= k[i][0]) return Math.min(duration - 0.05, lerp(k[i - 1][1], k[i][1], (s - k[i - 1][0]) / (k[i][0] - k[i - 1][0])));
   }
   return duration - 0.05;
+}
+// Frame-sequence player (the technique Apple uses on its product pages): the drone video is
+// cut into stills packed in WebP atlases; the canvas draws the exact frame for the scroll
+// position, blending the two nearest frames, so there is no video seeking and no stutter.
+async function useFrames() {
+  const r = await fetch(MEDIA.frames).catch(() => null);
+  if (!r || !okMedia(r)) return null;
+  const m = await r.json();
+  const small = innerWidth < 900 || matchMedia('(pointer: coarse)').matches;
+  const set = m.sets[small ? 'sd' : 'hd'];
+  const per = set.cols * set.rows;
+  const cv = document.createElement('canvas');
+  cv.className = 'media';
+  frame.prepend(cv);
+  $('scene').hidden = true;
+  const ctx = cv.getContext('2d', { alpha: false });
+  const atlas = new Array(set.files).fill(null); // null = not requested, false = loading, Image = ready
+  let active = 0, want = 0, dirty = true, lastKey = '';
+  const url = (i) => set.pattern.replace('{n}', String(i + 1).padStart(3, '0'));
+  const coarse = [];
+  for (let i = 0; i < set.files; i += 8) coarse.push(i);
+  function next() {
+    for (const i of coarse) if (atlas[i] === null) return i;
+    for (let d = 0; d < set.files; d++) {
+      for (const i of [want + d, want - d]) if (i >= 0 && i < set.files && atlas[i] === null) return i;
+    }
+    return -1;
+  }
+  function pump() {
+    while (active < 6) {
+      const i = next(); if (i < 0) return;
+      atlas[i] = false; active++;
+      const im = new Image();
+      im.src = url(i);
+      im.decode().then(() => { atlas[i] = im; dirty = true; }).catch(() => { atlas[i] = null; })
+        .finally(() => { active--; pump(); });
+    }
+  }
+  function frameAt(n) {
+    n = Math.max(0, Math.min(m.count - 1, n));
+    const im = atlas[Math.floor(n / per)];
+    if (!im) return null;
+    const k = n % per;
+    return { im, sx: (k % set.cols) * set.w, sy: Math.floor(k / set.cols) * set.h };
+  }
+  function nearest(n) {
+    for (let d = 0; d < m.count; d++) { const f = frameAt(n - d) || frameAt(n + d); if (f) return f; }
+    return null;
+  }
+  function draw(f, alpha) {
+    const cw = cv.width, ch = cv.height, sc = Math.max(cw / set.w, ch / set.h);
+    const dw = set.w * sc, dh = set.h * sc;
+    ctx.globalAlpha = alpha;
+    ctx.drawImage(f.im, f.sx, f.sy, set.w, set.h, (cw - dw) / 2, (ch - dh) / 2, dw, dh);
+  }
+  const fit = () => {
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    cv.width = Math.max(2, Math.round(cv.clientWidth * dpr));
+    cv.height = Math.max(2, Math.round(cv.clientHeight * dpr));
+    ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+    dirty = true;
+  };
+  addEventListener('resize', fit);
+  fit();
+  pump();
+  // wait for the first images so the page never opens on an empty frame
+  await new Promise((ok) => { const t0 = performance.now(); (function w() { if (frameAt(0) || performance.now() - t0 > 4000) ok(); else setTimeout(w, 50); })(); });
+  return {
+    update(s) {
+      if (cv.clientHeight && Math.abs(cv.height - cv.clientHeight * Math.min(devicePixelRatio || 1, 2)) > 2) fit();
+      const fr = stageToTime(s, m.duration) * m.fps;
+      const n0 = Math.floor(fr), a = fr - n0;
+      want = Math.floor(n0 / per);
+      const key = fr.toFixed(3);
+      if (key === lastKey && !dirty) return;
+      lastKey = key; dirty = false;
+      const f0 = frameAt(n0), f1 = frameAt(n0 + 1);
+      if (f0) { draw(f0, 1); if (f1 && a > 0.02) draw(f1, a); }
+      else { const f = nearest(n0); if (f) draw(f, 1); }
+      ctx.globalAlpha = 1;
+      pump();
+    },
+  };
 }
 function useVideo() {
   const v = document.createElement('video');
@@ -342,7 +426,8 @@ function use3D() {
 }
 (async () => {
   try {
-    if (await exists(MEDIA.video)) media = await useVideo();
+    media = await useFrames();
+    if (!media && (await exists(MEDIA.video))) media = await useVideo();
     if (!media && (await Promise.all(MEDIA.images.map(exists))).every(Boolean)) media = await useImages();
     if (!media) await use3D();
   } catch (err) {
