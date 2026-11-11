@@ -176,5 +176,6 @@ button,input,select,textarea{font:inherit;color:inherit}
 }
 
 /* photo / video mode */
-.frame .media{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform-origin:50% 55%;will-change:opacity,transform}
+.frame .media{position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover;transform-origin:50% 55%;will-change:opacity,transform}
 .frame video.media{transform:none}
+@media (max-width:900px){.frame .media{top:var(--mt,0);height:var(--mh,100%)}}

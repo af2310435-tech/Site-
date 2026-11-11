@@ -167,6 +167,9 @@ function ui(s) {
   } else {
     frame.style.transform = '';
     frame.style.borderRadius = '';
+    // photo mode: shrink the photos into the card too, so the whole villa stays in view
+    frame.style.setProperty('--mt', `${lerp(0, 11, f).toFixed(2)}vh`);
+    frame.style.setProperty('--mh', `${lerp(100, 42, f).toFixed(2)}%`);
     frame.style.clipPath = f > 0.001
       ? `inset(${lerp(0, 11, f)}vh ${lerp(0, 4, f)}vw ${lerp(0, 47, f)}vh ${lerp(0, 4, f)}vw round ${lerp(0, 14, f)}px)`
       : '';
@@ -213,7 +216,10 @@ const MEDIA = {
   video: 'assets/build.mp4',
   images: ['1-ground', '2-structure', '3-finish', '4-inside', '5-living', '6-home'].map((n) => `assets/stages/${n}.jpg`),
 };
-const exists = (url) => fetch(url, { method: 'HEAD', cache: 'no-store' }).then((r) => r.ok && !(r.headers.get('content-type') || '').includes('text/html')).catch(() => false);
+const okMedia = (r) => r.ok && !(r.headers.get('content-type') || '').includes('text/html');
+const exists = (url) => fetch(url, { method: 'HEAD' })
+  .then((r) => okMedia(r) || (r.status === 405 && fetch(url).then(okMedia)))
+  .catch(() => false);
 
 let media = null; // { update(s) }
 function useVideo() {
