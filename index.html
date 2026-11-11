@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TERRA — Homes Built to Last</title>
+<meta name="description" content="TERRA Costruzioni — family builders in Tuscany. From the first stone to the keys in your hand.">
+<meta name="theme-color" content="#0b0c0e">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }
+</script>
+</head>
+<body>
+
+<div class="loader" id="loader" aria-hidden="true">
+  <div class="loader-inner">
+    <svg viewBox="0 0 24 24" class="loader-mark"><path d="M3 11.5 12 4l9 7.5V20a1 1 0 0 1-1 1h-5.5v-6h-5v6H4a1 1 0 0 1-1-1z"/></svg>
+    <span data-i18n="loading">Laying the foundations…</span>
+  </div>
+</div>
+
+<header class="nav" id="nav">
+  <a class="brand" href="#top" aria-label="TERRA Costruzioni">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5V20a1 1 0 0 1-1 1h-5.5v-6h-5v6H4a1 1 0 0 1-1-1z"/></svg>
+    <span class="brand-name">TERRA</span>
+    <span class="brand-sub">Costruzioni</span>
+  </a>
+  <nav class="links">
+    <a href="#build" data-i18n="nav.build">The build</a>
+    <a href="#services" data-i18n="nav.services">Services</a>
+    <a href="#studio" data-i18n="nav.studio">Studio</a>
+    <a href="#contact" data-i18n="nav.contact">Contact</a>
+  </nav>
+  <div class="nav-right">
+    <div class="lang" role="group" aria-label="Language">
+      <button type="button" data-lang="en" class="on">EN</button><span>·</span><button type="button" data-lang="it">IT</button>
+    </div>
+    <a class="btn btn-primary btn-sm" href="#contact" data-i18n="cta.quote">Request a quote</a>
+  </div>
+</header>
+
+<main id="top">
+  <section id="build" class="build" aria-label="The build">
+    <div class="sticky">
+      <div class="frame" id="frame">
+        <canvas id="scene" aria-label="A house being built, stage by stage"></canvas>
+        <div class="shade" id="shade"></div>
+      </div>
+
+      <div class="copy">
+        <article class="panel" data-stage="0">
+          <p class="eyebrow"><span></span>01 — <b data-i18n="st.0">Ground</b></p>
+          <h1 data-i18n="h.0">Every home starts <em>from the ground up.</em></h1>
+          <p data-i18n="p.0">Foundations poured, steel set, the first line drawn on the land. Scroll and watch it rise.</p>
+        </article>
+        <article class="panel" data-stage="1">
+          <p class="eyebrow"><span></span>02 — <b data-i18n="st.1">Structure</b></p>
+          <h2 data-i18n="h.1">Brick by brick, <em>floor by floor.</em></h2>
+          <p data-i18n="p.1">Load-bearing masonry, reinforced concrete and a roof that closes the shell — built by our own crews.</p>
+        </article>
+        <article class="panel" data-stage="2">
+          <p class="eyebrow"><span></span>03 — <b data-i18n="st.2">Finish</b></p>
+          <h2 data-i18n="h.2">Built to <em>the last detail.</em></h2>
+          <p data-i18n="p.2">Lime render, larch cladding, standing-seam metal and triple glazing. Materials chosen to age well.</p>
+        </article>
+        <article class="panel" data-stage="3">
+          <p class="eyebrow"><span></span>04 — <b data-i18n="st.3">Inside</b></p>
+          <h2 data-i18n="h.3">Step inside <em>your next chapter.</em></h2>
+          <p data-i18n="p.3">Open-plan living, a kitchen made for long dinners and light that follows you from morning to night.</p>
+        </article>
+        <article class="panel" data-stage="4">
+          <p class="eyebrow"><span></span>05 — <b data-i18n="st.4">Living</b></p>
+          <h2 data-i18n="h.4">Spaces made <em>for the light.</em></h2>
+          <p data-i18n="p.4">Terraces, pools and gardens designed together with the house, so inside and outside become one place.</p>
+        </article>
+        <article class="panel panel-final" data-stage="5">
+          <p class="eyebrow"><span></span>06 — <b data-i18n="st.5">Handover</b></p>
+          <h2 data-i18n="h.5">Welcome <em>home.</em></h2>
+          <p data-i18n="p.5">From the first stone to the keys in your hand. One team, one promise.</p>
+          <div class="actions">
+            <a class="btn btn-primary" href="#contact"><span data-i18n="cta.quote">Request a quote</span> <span aria-hidden="true">→</span></a>
+            <a class="btn btn-ghost" href="#services" data-i18n="cta.projects">Our projects</a>
+          </div>
+        </article>
+      </div>
+
+      <div class="hud">
+        <div class="stats">
+          <div><small data-i18n="hud.day">Build day</small><strong id="day">000</strong></div>
+          <div><small data-i18n="hud.complete">Complete</small><strong id="pct">0%</strong></div>
+          <div class="stat-stage"><small data-i18n="hud.stage">Stage</small><strong id="stageName">Foundations</strong></div>
+        </div>
+        <ol class="dots" id="dots">
+          <li><button type="button" data-go="0"><i></i><span data-i18n="dot.0">Ground</span></button></li>
+          <li><button type="button" data-go="1"><i></i><span data-i18n="dot.1">Structure</span></button></li>
+          <li><button type="button" data-go="2"><i></i><span data-i18n="dot.2">Finish</span></button></li>
+          <li><button type="button" data-go="3"><i></i><span data-i18n="dot.3">Inside</span></button></li>
+          <li><button type="button" data-go="4"><i></i><span data-i18n="dot.4">Living</span></button></li>
+          <li><button type="button" data-go="5"><i></i><span data-i18n="dot.5">Home</span></button></li>
+        </ol>
+        <div class="plan">
+          <svg id="plan" viewBox="0 0 200 104" aria-hidden="true">
+            <path pathLength="1" d="M8 8 H192 V96 H8 Z"/>
+            <path pathLength="1" d="M8 8 V96 M192 8 V96"/>
+            <path pathLength="1" d="M104 8 V46 M104 62 V96"/>
+            <path pathLength="1" d="M8 52 H44 M58 52 H104"/>
+            <path pathLength="1" d="M150 8 V38 H192"/>
+            <path pathLength="1" d="M150 60 H192"/>
+            <path class="win" pathLength="1" d="M20 96 H90 M118 96 H180"/>
+            <path class="win" pathLength="1" d="M36 8 H70 M160 8 H178"/>
+            <path class="door" pathLength="1" d="M44 52 A14 14 0 0 1 58 38"/>
+          </svg>
+          <div class="plan-label" data-i18n="plan.label">Plan · Ground floor · 1:100</div>
+          <div class="plan-bar"><i id="planBar"></i></div>
+          <div class="plan-tabs" id="planTabs">
+            <span data-i18n="tab.0">Ground</span><span data-i18n="tab.1">Frame</span><span data-i18n="tab.2">Roof</span><span data-i18n="tab.3">Keys</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="scroll-hint" id="hint"><span data-i18n="hint">Scroll to build</span><i></i></div>
+    </div>
+  </section>
+
+  <section id="services" class="section">
+    <div class="section-head reveal">
+      <p class="kicker"><span></span><b data-i18n="srv.kicker">Services</b></p>
+      <h2 class="title" data-i18n="srv.title">What we <em>build.</em></h2>
+      <p class="lead" data-i18n="srv.lead">One contract, one team — from permits to the final walkthrough.</p>
+    </div>
+    <div class="cards">
+      <article class="card reveal">
+        <span class="num">01</span>
+        <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M6 24 24 9l18 15M11 20v19h26V20M20 39V28h8v11"/></svg>
+        <h3 data-i18n="srv.1.t">New homes</h3>
+        <p data-i18n="srv.1.d">Turnkey villas and family homes, designed and built on your land.</p>
+      </article>
+      <article class="card reveal">
+        <span class="num">02</span>
+        <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M8 40h32M12 40V22l12-9 12 9v18M18 28h12M18 34h12M30 8l4 4-10 10"/></svg>
+        <h3 data-i18n="srv.2.t">Renovation</h3>
+        <p data-i18n="srv.2.d">Farmhouses and apartments restored with structural upgrades and new systems.</p>
+      </article>
+      <article class="card reveal">
+        <span class="num">03</span>
+        <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M8 36h32M12 36V26h24v10M16 26v-6h16v6M24 8v6M19 14h10l-2 6h-6z"/></svg>
+        <h3 data-i18n="srv.3.t">Interiors</h3>
+        <p data-i18n="srv.3.d">Kitchens, bathrooms, joinery and lighting, made to measure in our workshop.</p>
+      </article>
+      <article class="card reveal">
+        <span class="num">04</span>
+        <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M6 30c4 3 8 3 12 0s8-3 12 0 8 3 12 0M6 38c4 3 8 3 12 0s8-3 12 0 8 3 12 0M30 24V8m0 0c-6 0-10 4-10 8m10-8c6 0 10 4 10 8"/></svg>
+        <h3 data-i18n="srv.4.t">Pools &amp; landscape</h3>
+        <p data-i18n="srv.4.d">Pools, terraces and gardens planned with the house, not after it.</p>
+      </article>
+    </div>
+  </section>
+
+  <section id="studio" class="section studio">
+    <div class="studio-text reveal">
+      <p class="kicker"><span></span><b data-i18n="std.kicker">Studio</b></p>
+      <h2 class="title" data-i18n="std.title">A family of builders <em>since 1987.</em></h2>
+      <p class="lead" data-i18n="std.text">Three generations of builders, surveyors and craftspeople working from Siena across Tuscany. Every trade stays in-house, so the person who quotes your home is the person who hands you the keys.</p>
+    </div>
+    <dl class="figures">
+      <div class="reveal"><dt data-count="38">38</dt><dd data-i18n="std.f1">years on site</dd></div>
+      <div class="reveal"><dt data-count="240" data-suffix="+">240+</dt><dd data-i18n="std.f2">homes delivered</dd></div>
+      <div class="reveal"><dt data-count="11">11</dt><dd data-i18n="std.f3">months average build</dd></div>
+      <div class="reveal"><dt data-count="10">10</dt><dd data-i18n="std.f4">year structural warranty</dd></div>
+    </dl>
+    <figure class="quote reveal">
+      <blockquote data-i18n="std.quote">“They gave us a fixed price and a date. They kept both.”</blockquote>
+      <figcaption data-i18n="std.who">Giulia &amp; Marco — villa near Montalcino</figcaption>
+    </figure>
+  </section>
+
+  <section id="contact" class="section contact">
+    <div class="contact-text reveal">
+      <p class="kicker"><span></span><b data-i18n="ct.kicker">Contact</b></p>
+      <h2 class="title" data-i18n="ct.title">Let’s build <em>yours.</em></h2>
+      <p class="lead" data-i18n="ct.lead">Tell us about your land and your idea. We reply within two working days with a first estimate.</p>
+      <ul class="info">
+        <li><small data-i18n="ct.studio">Studio</small>Strada di Pietra 12, 53100 Siena</li>
+        <li><small data-i18n="ct.phone">Phone</small><a href="tel:+390577000000">+39 0577 000 000</a></li>
+        <li><small>Email</small><a href="mailto:studio@terra.example">studio@terra.example</a></li>
+      </ul>
+    </div>
+    <form class="form reveal" id="quoteForm" novalidate>
+      <label><span data-i18n="f.name">Name</span><input name="name" required autocomplete="name"></label>
+      <label><span>Email</span><input name="email" type="email" required autocomplete="email"></label>
+      <label><span data-i18n="f.phone">Phone</span><input name="phone" type="tel" autocomplete="tel"></label>
+      <label><span data-i18n="f.project">Project</span>
+        <select name="project">
+          <option data-i18n="srv.1.t">New homes</option>
+          <option data-i18n="srv.2.t">Renovation</option>
+          <option data-i18n="srv.3.t">Interiors</option>
+          <option data-i18n="srv.4.t">Pools &amp; landscape</option>
+        </select>
+      </label>
+      <label class="full"><span data-i18n="f.msg">Tell us about your project</span><textarea name="message" rows="4"></textarea></label>
+      <button class="btn btn-primary full" type="submit"><span data-i18n="f.send">Send request</span> <span aria-hidden="true">→</span></button>
+      <p class="form-ok" id="formOk" role="status" hidden data-i18n="f.ok">Thank you — we’ll be in touch within two working days.</p>
+    </form>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="brand"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5V20a1 1 0 0 1-1 1h-5.5v-6h-5v6H4a1 1 0 0 1-1-1z"/></svg><span class="brand-name">TERRA</span><span class="brand-sub">Costruzioni</span></div>
+  <p>© 2026 TERRA Costruzioni · Siena</p>
+  <a href="#top" data-i18n="foot.top">Back to top ↑</a>
+</footer>
+
+<script type="module" src="main.js"></script>
+</body>
+</html>
