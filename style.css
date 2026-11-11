@@ -174,3 +174,7 @@ button,input,select,textarea{font:inherit;color:inherit}
   .reveal{transition:none;opacity:1;transform:none}
   .scroll-hint i,.loader-mark{animation:none}
 }
+
+/* photo / video mode */
+.frame .media{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform-origin:50% 55%;will-change:opacity,transform}
+.frame video.media{transform:none}

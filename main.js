@@ -204,20 +204,78 @@ const loader = $('loader');
 const hideLoader = () => loader.classList.add('done');
 setTimeout(hideLoader, 6000); // never block the page
 
-import('./scene.js')
-  .then(async (m) => {
+/* Visual source, in order of preference:
+   1. assets/build.mp4        a video of the whole build, scrubbed by the scroll
+   2. assets/stages/1..6.jpg  one photo per stage, cross-faded by the scroll
+   3. the procedural 3D scene (scene.js), used when no media is present.
+   See PROMPTS.md for how to generate the photos / video. */
+const MEDIA = {
+  video: 'assets/build.mp4',
+  images: ['1-ground', '2-structure', '3-finish', '4-inside', '5-living', '6-home'].map((n) => `assets/stages/${n}.jpg`),
+};
+const exists = (url) => fetch(url, { method: 'HEAD', cache: 'no-store' }).then((r) => r.ok && !(r.headers.get('content-type') || '').includes('text/html')).catch(() => false);
+
+let media = null; // { update(s) }
+function useVideo() {
+  const v = document.createElement('video');
+  Object.assign(v, { src: MEDIA.video, muted: true, playsInline: true, preload: 'auto' });
+  v.className = 'media';
+  frame.prepend(v);
+  $('scene').hidden = true;
+  let want = 0, seeking = false;
+  v.addEventListener('seeked', () => { seeking = false; });
+  return new Promise((ok) => {
+    v.addEventListener('loadeddata', () => ok({
+      update(s) {
+        want = (s / STAGES) * Math.max(0, v.duration - 0.05);
+        if (!seeking && Math.abs(v.currentTime - want) > 1 / 60) { seeking = true; v.currentTime = want; }
+      },
+    }), { once: true });
+    v.addEventListener('error', () => ok(null), { once: true });
+  });
+}
+function useImages() {
+  const imgs = MEDIA.images.map((src, i) => {
+    const im = new Image();
+    im.src = src; im.alt = ''; im.className = 'media'; im.decoding = 'async';
+    im.style.zIndex = i;
+    frame.prepend(im);
+    return im;
+  });
+  $('scene').hidden = true;
+  return Promise.all(imgs.map((im) => im.decode().catch(() => {}))).then(() => ({
+    update(s) {
+      imgs.forEach((im, i) => {
+        // each photo fades in over the previous one, with a slow push-in like a drone shot
+        const o = i === 0 ? 1 : smooth(s, i - 0.55, i - 0.05);
+        const local = clamp((s - (i - 0.55)) / 1.55);
+        im.style.opacity = o.toFixed(3);
+        im.style.transform = `scale(${(1.08 - 0.08 * local).toFixed(4)})`;
+        im.style.visibility = o < 0.002 ? 'hidden' : 'visible';
+      });
+    },
+  }));
+}
+function use3D() {
+  return import('./scene.js').then(async (m) => {
     world = await m.createScene($('scene'));
     const resize = () => world.resize(frame.clientWidth, frame.clientHeight);
     addEventListener('resize', resize);
     resize();
     world.render(s, 0, 0, 0);
-    requestAnimationFrame(hideLoader);
-  })
-  .catch((err) => {
-    console.warn('3D scene unavailable:', err);
-    frame.classList.add('fallback');
-    hideLoader();
   });
+}
+(async () => {
+  try {
+    if (await exists(MEDIA.video)) media = await useVideo();
+    if (!media && (await Promise.all(MEDIA.images.map(exists))).every(Boolean)) media = await useImages();
+    if (!media) await use3D();
+  } catch (err) {
+    console.warn('Visual unavailable:', err);
+    frame.classList.add('fallback');
+  }
+  requestAnimationFrame(hideLoader);
+})();
 
 /* ------------------------------------------------------------------ loop */
 // ?still renders only when the scroll moves (used for automated screenshots)
@@ -234,6 +292,7 @@ function loop(now) {
   pointer.y += (pointer.ty - pointer.y) * (1 - Math.exp(-dt * 3));
   ui(s);
   const r = build.getBoundingClientRect();
+  if (media) media.update(s);
   const moving = Math.abs(target - s) > 1e-4 || stillFrames > 0;
   if (world && r.bottom > 0 && r.top < innerHeight && (!STILL || moving)) {
     world.render(s, now / 1000, pointer.x, pointer.y);
